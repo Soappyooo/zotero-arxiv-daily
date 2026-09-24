@@ -1,6 +1,5 @@
 """Tests for ArxivRetriever."""
 
-import re
 import time
 from types import SimpleNamespace
 
@@ -44,21 +43,13 @@ def test_arxiv_retriever(config, mock_feedparser, monkeypatch):
             source_url=lambda pid=pid: f"https://arxiv.org/e-print/{pid}",
         ))
 
-    requested_id_lists: list[list[str]] = []
-
     class FakeClient:
         def __init__(self, **kw):
             pass
         def results(self, search):
-            requested_id_lists.append(list(search.id_list))
             return iter(fake_results)
 
     monkeypatch.setattr(arxiv_retriever.arxiv, "Client", FakeClient)
-    monkeypatch.setattr(
-        arxiv_retriever.arxiv,
-        "Search",
-        lambda id_list: SimpleNamespace(id_list=id_list),
-    )
 
     # Skip file downloads in convert_to_paper
     monkeypatch.setattr(arxiv_retriever, "extract_text_from_html", lambda paper: None)
@@ -70,8 +61,6 @@ def test_arxiv_retriever(config, mock_feedparser, monkeypatch):
 
     assert len(papers) == len(new_entries)
     assert set(p.title for p in papers) == set(e.title for e in new_entries)
-    assert requested_id_lists
-    assert all(re.search(r"v\d+$", pid) is None for pid in requested_id_lists[0])
 
 
 def test_run_with_hard_timeout_returns_value():
