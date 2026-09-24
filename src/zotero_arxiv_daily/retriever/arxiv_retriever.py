@@ -13,17 +13,12 @@ from time import sleep
 from typing import Any, Callable, TypeVar
 from loguru import logger
 import requests
-import re
 
 T = TypeVar("T")
 
 DOWNLOAD_TIMEOUT = (10, 60)
 PDF_EXTRACT_TIMEOUT = 180
 TAR_EXTRACT_TIMEOUT = 180
-
-
-def _normalize_arxiv_id(paper_id: str) -> str:
-    return re.sub(r"v\d+$", "", paper_id)
 
 
 def _download_file(url: str, path: str) -> None:
@@ -129,7 +124,7 @@ class ArxivRetriever(BaseRetriever):
         raw_papers = []
         allowed_announce_types = {"new", "cross"} if include_cross_list else {"new"}
         all_paper_ids = [
-            _normalize_arxiv_id(i.id.removeprefix("oai:arXiv.org:"))
+            i.id.removeprefix("oai:arXiv.org:")
             for i in feed.entries
             if i.get("arxiv_announce_type", "new") in allowed_announce_types
         ]
